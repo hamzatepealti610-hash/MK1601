@@ -98,7 +98,7 @@
 
         <!-- Yazı Akışı / Grid -->
         <div id="postsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-12 text-slate-400">Yazılar buluttan yükleniyor...[cite: 1]</div>
+            <div class="col-span-full text-center py-12 text-slate-400">Yazılar buluttan yükleniyor...</div>
         </div>
 
         <!-- Hakkımda Görünüm Alanı -->
@@ -208,7 +208,7 @@
     <!-- Yeni Yazı Ekleme / Düzenleme Modal -->
     <div id="postModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-carddark rounded-2xl p-6 max-w-2xl w-full shadow-2xl my-8">
-            <h3 class="text-xl font-bold mb-4" id="modalTitle">Yeni İçerik Ekle[cite: 1]</h3>
+            <h3 class="text-xl font-bold mb-4" id="modalTitle">Yeni İçerik Ekle</h3>
             <form id="postForm" onsubmit="savePost(event)" class="space-y-4">
                 <input type="hidden" id="postId">
                 <div>
@@ -294,7 +294,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-500">
-        <p>© 2026 - Muhammed Hamza Tepealtı | Kişisel Blog & Portfolyo Platformu (Cloud)[cite: 1]</p>
+        <p>© 2026 - Muhammed Hamza Tepealtı | Kişisel Blog & Portfolyo Platformu (Cloud)</p>
     </footer>
 
     <script>
@@ -421,9 +421,11 @@
         }
 
         function showAboutView() {
+            // Diğer alanları gizle
             document.getElementById('postsContainer').classList.add('hidden');
             document.getElementById('filterSection').classList.add('hidden');
             document.getElementById('postDetailView').classList.add('hidden');
+            // Hakkımda alanını göster
             document.getElementById('aboutView').classList.remove('hidden');
         }
 
