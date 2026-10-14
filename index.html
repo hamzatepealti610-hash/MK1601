@@ -4,18 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kişisel Blog & Portfolyo(MHT)</title>
-    <link rel="icon" type="image/jpeg" href="./images.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400;600&family=Great+Vibes&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Merriweather:ital,wght@0,300;0,700;1,300&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;600;700&family=Poiret+One&family=Poppins:wght@300;400;600;700&family=Quicksand:wght@400;600&family=Roboto:wght@300;400;700&family=Sacramento&family=Special+Elite&family=Ubuntu:wght@300;400;700&family=Yesteryear&family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Caveat:wght@400;700&family=Amatic+SC:wght@400;700&family=Indie+Flower&family=Architects+Daughter&display=swap" rel="stylesheet">
-    <!-- Sosyal Medya Paylaşım Görseli ve Kartı (Open Graph) -->
-<meta property="og:title" content="Kişisel Blog & Portfolyo (MHT)">
-<meta property="og:description" content="Yazılım, gömülü sistemler ve mühendislik projelerimi paylaştığım kişisel web sitem.">
-<meta property="og:image" content="https://hamzatepealti610-hash.github.io/MK1601/images.jpg">
-<meta property="og:url" content="https://hamzatepealti610-hash.github.io/MK1601/">
-    <!-- Firebase SDK Entegrasyonu (Senin Proje Bilgilerinle) -->
+    
+    <!-- Firebase SDK Entegrasyonu -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIySe3Yt7LV9bd6xOPHA5yQgC3m_Sj0pE",
@@ -37,8 +32,11 @@
         window.updateDoc = updateDoc;
         window.deleteDoc = deleteDoc;
         window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
 
         window.loadPostsFromCloud();
+        window.loadAboutAndTeams();
     </script>
 
     <script>
@@ -59,17 +57,24 @@
 
     <!-- Üst Menü / Navbar -->
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-carddark/80 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
             <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent cursor-pointer" onclick="showPublicFeed()">
                 Hamza's Portfolio And Personal Blog
             </h1>
-            <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Tema Değiştir">
-                    🌓
-                </button>
-                <button onclick="openAdminModal()" id="adminBtnText" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow transition">
-                    🔐 Admin Giriş
-                </button>
+            <div class="flex items-center flex-wrap gap-3">
+                <button onclick="showAboutView()" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Hakkımda</button>
+                <button onclick="filterPosts('Proje')" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Projelerim</button>
+                <button onclick="filterPosts('Kulüp Etkinliği')" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Kulüp Etkinliklerimiz</button>
+                <button onclick="filterPosts('Araştırma')" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition">Araştırmalarım</button>
+                
+                <div class="flex items-center gap-2 border-l pl-3 border-slate-300 dark:border-slate-700">
+                    <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Tema Değiştir">
+                        🌓
+                    </button>
+                    <button onclick="openAdminModal()" id="adminBtnText" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow transition">
+                        🔐 Admin Giriş
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -77,6 +82,14 @@
     <!-- Ana İçerik Alanı -->
     <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
         
+        <!-- Kulüp ve Takımlar Bilgi Alanı -->
+        <div id="activeTeamsBanner" class="mb-8 hidden bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-indigo-500 font-bold text-lg">📌 Aktif Kulüp & Takımlar:</span>
+            </div>
+            <div id="teamsDisplayList" class="flex flex-wrap gap-2"></div>
+        </div>
+
         <!-- Filtreler ve Arama -->
         <div id="filterSection" class="mb-8 flex flex-wrap gap-2 items-center justify-between">
             <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
@@ -85,7 +98,22 @@
 
         <!-- Yazı Akışı / Grid -->
         <div id="postsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-12 text-slate-400">Yazılar buluttan yükleniyor...</div>
+            <div class="col-span-full text-center py-12 text-slate-400">Yazılar buluttan yükleniyor...[cite: 1]</div>
+        </div>
+
+        <!-- Hakkımda Görünüm Alanı -->
+        <div id="aboutView" class="hidden max-w-3xl mx-auto bg-white dark:bg-carddark rounded-2xl shadow-xl p-8 transition-all">
+            <button onclick="showPublicFeed()" class="mb-6 text-sm text-indigo-500 hover:underline flex items-center gap-1">← Geri Dön</button>
+            <h2 class="text-3xl font-bold mb-6">Hakkımda</h2>
+            <div id="aboutContentDisplay" class="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed text-base">
+                Merhaba, ben Muhammed Hamza Tepealtı.
+
+                Marmara Üniversitesi Teknoloji Fakültesi Elektrik-Elektronik Mühendisliği 2. sınıf öğrencisiyim. Bu platformu; akademik ve teknik anlamda yürüttüğüm projeleri, araştırmalarımı ve hobi amaçlı geliştirdiğim çalışmalarımı tek bir çatı altında toplamak amacıyla hayata geçirdim.
+
+                Eğitim hayatım boyunca ve katıldığım çeşitli yarışma/projelerde karşılaştığım mühendislik problemlerini, geliştirdiğim özel çözümleri, teknik raporları ve elde ettiğim verileri burada sizlerle paylaşmayı hedefliyorum. Gerek laboratuvar deneyleri, gerekse simülasyon ve tasarım süreçlerindeki deneyimlerimi aktararak bu yolu benimle paylaşan herkese faydalı bir kaynak oluşturabilmeyi umuyorum.
+
+                Ziyaretiniz için teşekkür ederim; projelerimde ve yazılarımda görüşmek üzere!
+            </div>
         </div>
 
         <!-- Yazı Detay / Okuma Alanı -->
@@ -95,13 +123,39 @@
 
             <!-- Yorumlar Bölümü -->
             <div class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <h3 class="text-xl font-bold mb-4">Ziyaretçi Yorumları</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Ziyaretçi Yorumları ve Değerlendirmeler</h3>
+                    <div id="postAverageRating" class="text-sm font-semibold text-amber-500"></div>
+                </div>
                 
                 <div id="commentFormContainer">
-                    <form id="commentForm" onsubmit="addComment(event)" class="mb-8 space-y-3">
+                    <form id="commentForm" onsubmit="handleCommentSubmit(event)" class="mb-8 space-y-3 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <input type="hidden" id="editingCommentId" value="">
+                        
+                        <!-- Yıldız Puanlama -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Puanınız:</span>
+                            <div id="starRatingPicker" class="flex gap-1 cursor-pointer">
+                                <span onclick="setRating(1)" class="text-2xl text-slate-300 hover:text-amber-400 star" data-value="1">★</span>
+                                <span onclick="setRating(2)" class="text-2xl text-slate-300 hover:text-amber-400 star" data-value="2">★</span>
+                                <span onclick="setRating(3)" class="text-2xl text-slate-300 hover:text-amber-400 star" data-value="3">★</span>
+                                <span onclick="setRating(4)" class="text-2xl text-slate-300 hover:text-amber-400 star" data-value="4">★</span>
+                                <span onclick="setRating(5)" class="text-2xl text-slate-300 hover:text-amber-400 star" data-value="5">★</span>
+                            </div>
+                            <input type="hidden" id="commentRating" value="5">
+                        </div>
+
                         <input type="text" id="commentAuthor" placeholder="Adınız / Rumuzunuz" required class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm">
-                        <textarea id="commentText" rows="3" placeholder="Yorumunuzu buraya yazın..." required class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm"></textarea>
-                        <button type="submit" id="commentSubmitBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">Yorum Yap</button>
+                        
+                        <div>
+                            <textarea id="commentText" rows="3" maxlength="250" oninput="updateCharCount(this)" placeholder="Yorumunuzu buraya yazın (En fazla 250 karakter)..." required class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm"></textarea>
+                            <div class="text-right text-xs text-slate-400 mt-1"><span id="charCount">0</span>/250</div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button type="submit" id="commentSubmitBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">Yorum Yap</button>
+                            <button type="button" id="cancelEditBtn" onclick="cancelEditComment()" class="hidden px-4 py-2 bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-medium rounded-lg transition">İptal</button>
+                        </div>
                     </form>
                 </div>
 
@@ -110,6 +164,27 @@
         </div>
 
     </main>
+
+    <!-- Admin Panel Yönetim Modalı -->
+    <div id="adminSettingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-carddark rounded-2xl p-6 max-w-xl w-full shadow-2xl my-8">
+            <h3 class="text-xl font-bold mb-4">Admin İçerik ve Kulüp Yönetimi</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Hakkımda Yazısı Düzenle</label>
+                    <textarea id="adminAboutInput" rows="6" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Aktif Kulüp ve Takımlar (Virgülle ayırarak yazın)</label>
+                    <input type="text" id="adminTeamsInput" placeholder="Örn: Marmara EEMK, Robotik Takımı..." class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="closeAdminSettingsModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200 dark:bg-slate-700">İptal</button>
+                    <button onclick="saveAdminSettings()" class="px-4 py-2 rounded-lg text-sm bg-indigo-600 text-white font-medium">Değişiklikleri Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Admin Giriş Modal -->
     <div id="adminModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
@@ -133,7 +208,7 @@
     <!-- Yeni Yazı Ekleme / Düzenleme Modal -->
     <div id="postModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div class="bg-white dark:bg-carddark rounded-2xl p-6 max-w-2xl w-full shadow-2xl my-8">
-            <h3 class="text-xl font-bold mb-4" id="modalTitle">Yeni İçerik Ekle</h3>
+            <h3 class="text-xl font-bold mb-4" id="modalTitle">Yeni İçerik Ekle[cite: 1]</h3>
             <form id="postForm" onsubmit="savePost(event)" class="space-y-4">
                 <input type="hidden" id="postId">
                 <div>
@@ -151,13 +226,15 @@
                             <option value="Araştırma">Araştırma</option>
                             <option value="Günlük">Günlük</option>
                             <option value="Deneme">Deneme</option>
+                            <option value="Proje">Proje</option>
+                            <option value="Kulüp Etkinliği">Kulüp Etkinliği</option>
                             <option value="custom">➕ Özel Tür Ekle...</option>
                         </select>
                         <input type="text" id="customTypeInput" placeholder="Yeni tür adını yazın..." class="w-full mt-2 px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 hidden">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Konu / Tema</label>
-                        <input type="text" id="postTopic" placeholder="Örn: Özlem, Doğa, Melankoli..." class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700" required>
+                        <label class="block text-sm font-medium mb-1">Konular / Temalar (Virgülle ayırarak yazın)</label>
+                        <input type="text" id="postTopic" placeholder="Örn: Aşk, Doğa, Melankoli..." class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700" required>
                     </div>
                 </div>
 
@@ -217,7 +294,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-500">
-        <p>© 2026 - Muhammed Hamza Tepealtı | Kişisel Blog & Şiir Platformu (Cloud)</p>
+        <p>© 2026 - Muhammed Hamza Tepealtı | Kişisel Blog & Portfolyo Platformu (Cloud)[cite: 1]</p>
     </footer>
 
     <script>
@@ -231,9 +308,7 @@
             const rememberedUser = localStorage.getItem('hamza_admin_user');
             
             if(rememberedSession === 'true') {
-                isAdmin = true;
-                document.getElementById('adminBtnText').innerText = '🔓 Admin (Çıkış)';
-                document.getElementById('adminQuickActions').innerHTML = `<button onclick="openPostModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition">➕ Yeni İçerik Ekle</button>`;
+                enableAdminModeUI();
             }
 
             if(rememberedUser) {
@@ -241,6 +316,17 @@
                 document.getElementById('rememberMe').checked = true;
             }
         });
+
+        function enableAdminModeUI() {
+            isAdmin = true;
+            document.getElementById('adminBtnText').innerText = '🔓 Admin (Çıkış)';
+            document.getElementById('adminQuickActions').innerHTML = `
+                <div class="flex gap-2">
+                    <button onclick="openPostModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition">➕ Yeni İçerik Ekle</button>
+                    <button onclick="openAdminSettingsModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow transition">⚙️ Sayfa Ayarları</button>
+                </div>
+            `;
+        }
 
         async function loadPostsFromCloud() {
             try {
@@ -259,6 +345,96 @@
                 console.error("Yazılar yüklenirken hata oluştu: ", error);
                 document.getElementById('postsContainer').innerHTML = `<div class="col-span-full text-center py-12 text-rose-500 font-semibold">Firebase Firestore iznini açmanız gerekiyor!<br><span class="text-xs font-normal text-slate-400">Firebase Console > Firestore Database > Rules sekmesinden "allow read, write: if true;" yapın.</span></div>`;
             }
+        }
+
+        async function loadAboutAndTeams() {
+            try {
+                if(!window.db) return;
+                const docRef = window.doc(window.db, "settings", "site_config");
+                const docSnap = await window.getDoc(docRef);
+                
+                if(docSnap.exists()) {
+                    const data = docSnap.data();
+                    if(data.aboutText) {
+                        document.getElementById('aboutContentDisplay').innerText = data.aboutText;
+                        document.getElementById('adminAboutInput').value = data.aboutText;
+                    }
+                    if(data.teamsText) {
+                        document.getElementById('adminTeamsInput').value = data.teamsText;
+                        renderTeamsBanner(data.teamsText);
+                    }
+                }
+            } catch(e) {
+                console.error("Ayarlar yüklenemedi:", e);
+            }
+        }
+
+        function renderTeamsBanner(teamsString) {
+            const banner = document.getElementById('activeTeamsBanner');
+            const listContainer = document.getElementById('teamsDisplayList');
+            listContainer.innerHTML = '';
+
+            if(!teamsString || teamsString.trim() === '') {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            const teams = teamsString.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            if(teams.length === 0) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            teams.forEach(team => {
+                const badge = document.createElement('span');
+                badge.className = "px-3 py-1 bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-300 rounded-full text-xs font-semibold border border-indigo-500/20";
+                badge.innerText = team;
+                listContainer.appendChild(badge);
+            });
+
+            banner.classList.remove('hidden');
+        }
+
+        function openAdminSettingsModal() {
+            document.getElementById('adminSettingsModal').classList.remove('hidden');
+        }
+        function closeAdminSettingsModal() {
+            document.getElementById('adminSettingsModal').classList.add('hidden');
+        }
+
+        async function saveAdminSettings() {
+            const aboutText = document.getElementById('adminAboutInput').value.trim();
+            const teamsText = document.getElementById('adminTeamsInput').value.trim();
+
+            try {
+                const docRef = window.doc(window.db, "settings", "site_config");
+                await window.setDoc(docRef, { aboutText, teamsText }, { merge: true });
+                
+                document.getElementById('aboutContentDisplay').innerText = aboutText;
+                renderTeamsBanner(teamsText);
+                closeAdminSettingsModal();
+                alert('Ayarlar başarıyla güncellendi!');
+            } catch(e) {
+                console.error("Ayarlar kaydedilemedi:", e);
+                alert("Kaydedilemedi: " + e.message);
+            }
+        }
+
+        function showAboutView() {
+            document.getElementById('postsContainer').classList.add('hidden');
+            document.getElementById('filterSection').classList.add('hidden');
+            document.getElementById('postDetailView').classList.add('hidden');
+            document.getElementById('aboutView').classList.remove('hidden');
+        }
+
+        function showPublicFeed() {
+            document.getElementById('aboutView').classList.add('hidden');
+            document.getElementById('postDetailView').classList.add('hidden');
+            document.getElementById('filterSection').classList.remove('hidden');
+            document.getElementById('postsContainer').classList.remove('hidden');
+            activePostId = null;
+            currentFilter = 'all';
+            loadPostsFromCloud();
         }
 
         function toggleTheme() {
@@ -292,6 +468,7 @@
                 renderFilters();
                 renderPosts();
             } else {
+                document.getElementById('adminModal').classList.add('hidden');
                 document.getElementById('adminModal').classList.remove('hidden');
             }
         }
@@ -303,9 +480,7 @@
             const remember = document.getElementById('rememberMe').checked;
 
             if(user === 'yarimakillisair' && pass === 'hamza@.com') {
-                isAdmin = true;
-                document.getElementById('adminBtnText').innerText = '🔓 Admin (Çıkış)';
-                document.getElementById('adminQuickActions').innerHTML = `<button onclick="openPostModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition">➕ Yeni İçerik Ekle</button>`;
+                enableAdminModeUI();
                 
                 localStorage.setItem('hamza_admin_logged', 'true');
                 if(remember) {
@@ -347,6 +522,11 @@
         });
 
         function filterPosts(type) {
+            document.getElementById('aboutView').classList.add('hidden');
+            document.getElementById('postDetailView').classList.add('hidden');
+            document.getElementById('filterSection').classList.remove('hidden');
+            document.getElementById('postsContainer').classList.remove('hidden');
+            
             currentFilter = type;
             renderFilters();
             renderPosts();
@@ -354,7 +534,7 @@
 
         function renderFilters() {
             const filterContainer = document.getElementById('categoryFilters');
-            const defaultTypes = ['Şiir', 'Makale', 'Gezi', 'Araştırma', 'Günlük', 'Deneme'];
+            const defaultTypes = ['Şiir', 'Makale', 'Gezi', 'Araştırma', 'Günlük', 'Deneme', 'Proje', 'Kulüp Etkinliği'];
             
             const customTypesFromPosts = posts.map(p => p.type).filter(t => !defaultTypes.includes(t));
             const allTypes = ['all', ...defaultTypes, ...new Set(customTypesFromPosts)];
@@ -394,6 +574,15 @@
                 const card = document.createElement('div');
                 card.className = `bg-white dark:bg-carddark border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between transition hover:shadow-md`;
                 
+                // Birden fazla konuyu rozetler halinde ayırma
+                let topicsHtml = '';
+                if(post.topic) {
+                    const topics = post.topic.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                    topicsHtml = topics.map(t => `<span class="text-xs italic text-indigo-500 font-medium">#${t}</span>`).join(' ');
+                } else {
+                    topicsHtml = `<span class="text-xs italic text-indigo-500 font-medium">#Genel</span>`;
+                }
+
                 card.innerHTML = `
                     <div>
                         <div class="flex justify-between items-center mb-3">
@@ -406,8 +595,8 @@
                         <h3 class="text-xl font-bold mb-2">${post.title}</h3>
                         <p class="${post.fontSize || 'text-sm'} text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 whitespace-pre-line" style="font-family: ${post.font || 'inherit'}">${post.content}</p>
                     </div>
-                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <span class="text-xs italic text-indigo-500 font-medium">#${post.topic || 'Genel'}</span>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800 flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-2">${topicsHtml}</div>
                         <div class="flex gap-2">
                             <button onclick="viewPost('${post.id}')" class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 rounded-lg text-xs font-medium transition">Oku →</button>
                             ${isAdmin ? `<button onclick="editPost('${post.id}')" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 rounded-lg text-xs">✏️</button><button onclick="deletePost('${post.id}')" class="px-2 py-1 bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 rounded-lg text-xs">🗑️</button>` : ''}
@@ -425,8 +614,22 @@
             activePostId = id;
             document.getElementById('filterSection').classList.add('hidden');
             document.getElementById('postsContainer').classList.add('hidden');
+            document.getElementById('aboutView').classList.add('hidden');
             const detailView = document.getElementById('postDetailView');
             detailView.classList.remove('hidden');
+
+            let formattedContent = post.content.replace(
+                /(https?:\/\/[^\s]+)/g, 
+                '<a href="$1" target="_blank" class="text-indigo-600 dark:text-indigo-400 underline font-medium hover:text-indigo-800 dark:hover:text-indigo-300" rel="noopener noreferrer">$1</a>'
+            );
+
+            let topicsHtml = '';
+            if(post.topic) {
+                const topics = post.topic.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                topicsHtml = topics.map(t => `#${t}`).join(', ');
+            } else {
+                topicsHtml = '#Genel';
+            }
 
             document.getElementById('detailContent').innerHTML = `
                 <div class="flex justify-between items-center mb-4">
@@ -434,22 +637,35 @@
                     <span class="text-sm text-slate-400">${post.date}</span>
                 </div>
                 <h2 class="text-3xl font-bold mb-4">${post.title}</h2>
-                <p class="text-sm text-indigo-500 mb-6 font-medium">Tema: #${post.topic || 'Genel'}</p>
-                <div class="prose dark:prose-invert max-w-none whitespace-pre-line leading-relaxed ${post.fontSize || 'text-lg'}" style="font-family: ${post.font || 'inherit'}">${post.content}</div>
+                <p class="text-sm text-indigo-500 mb-6 font-medium">Temalar: ${topicsHtml}</p>
+                <div class="prose dark:prose-invert max-w-none whitespace-pre-line leading-relaxed ${post.fontSize || 'text-lg'}" style="font-family: ${post.font || 'inherit'}">${formattedContent}</div>
             `;
 
             renderComments(post);
         }
 
-        function showPublicFeed() {
-            document.getElementById('postDetailView').classList.add('hidden');
-            document.getElementById('filterSection').classList.remove('hidden');
-            document.getElementById('postsContainer').classList.remove('hidden');
-            activePostId = null;
-            loadPostsFromCloud();
+        // YILDIZ SİSTEMİ MANTIĞI
+        function setRating(rating) {
+            document.getElementById('commentRating').value = rating;
+            const stars = document.querySelectorAll('#starRatingPicker .star');
+            stars.forEach(star => {
+                const val = parseInt(star.getAttribute('data-value'));
+                if(val <= rating) {
+                    star.classList.remove('text-slate-300');
+                    star.classList.add('text-amber-400');
+                } else {
+                    star.classList.remove('text-amber-400');
+                    star.classList.add('text-slate-300');
+                }
+            });
         }
 
-        async function addComment(e) {
+        function updateCharCount(textarea) {
+            const len = textarea.value.length;
+            document.getElementById('charCount').innerText = len;
+        }
+
+        async function handleCommentSubmit(e) {
             e.preventDefault();
             if(isAdmin) {
                 alert('Admin olarak yorum yapamazsınız!');
@@ -458,6 +674,9 @@
 
             const author = document.getElementById('commentAuthor').value.trim();
             const text = document.getElementById('commentText').value.trim();
+            const rating = parseInt(document.getElementById('commentRating').value) || 5;
+            const editingId = document.getElementById('editingCommentId').value;
+
             if(!author || !text || !activePostId) return;
 
             const post = posts.find(p => p.id === activePostId);
@@ -465,28 +684,80 @@
 
             if(!post.comments) post.comments = [];
 
-            post.comments.push({
-                id: Date.now(),
-                author: author,
-                text: text,
-                date: new Date().toISOString().split('T')[0]
-            });
+            const deviceKey = `has_commented_${activePostId}`;
+
+            if(editingId) {
+                const commentIndex = post.comments.findIndex(c => c.id == editingId);
+                if(commentIndex !== -1) {
+                    post.comments[commentIndex].author = author;
+                    post.comments[commentIndex].text = text;
+                    post.comments[commentIndex].rating = rating;
+                }
+            } else {
+                if(localStorage.getItem(deviceKey)) {
+                    alert('Bu cihazdan bu metin için zaten bir yorum yapılmış!');
+                    return;
+                }
+
+                const newComment = {
+                    id: Date.now(),
+                    author: author,
+                    text: text,
+                    rating: rating,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                post.comments.push(newComment);
+                localStorage.setItem(deviceKey, newComment.id);
+            }
 
             const btn = document.getElementById('commentSubmitBtn');
             btn.disabled = true;
-            btn.innerText = "Gönderiliyor...";
+            btn.innerText = "Kaydediliyor...";
 
             try {
                 const postRef = window.doc(window.db, "posts", activePostId);
                 await window.updateDoc(postRef, { comments: post.comments });
-                document.getElementById('commentForm').reset();
+                cancelEditComment();
                 renderComments(post);
             } catch (error) {
-                console.error("Yorum eklenirken hata:", error);
-                alert("Yorum gönderilemedi! Firebase Firestore Kurallarınızı (Rules) kontrol edin.\n\nHata: " + error.message);
+                console.error("Yorum kaydedilirken hata:", error);
+                alert("İşlem başarısız! Firebase kurallarınızı kontrol edin.\n\nHata: " + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Yorum Yap";
+            }
+        }
+
+        function editCommentLocally(commentId) {
+            const post = posts.find(p => p.id === activePostId);
+            if(!post || !post.comments) return;
+
+            const comment = post.comments.find(c => c.id == commentId);
+            if(!comment) return;
+
+            document.getElementById('editingCommentId').value = comment.id;
+            document.getElementById('commentAuthor').value = comment.author;
+            document.getElementById('commentText').value = comment.text;
+            updateCharCount(document.getElementById('commentText'));
+            setRating(comment.rating || 5);
+
+            document.getElementById('commentSubmitBtn').innerText = "Yorumu Güncelle";
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            document.getElementById('commentFormContainer').classList.remove('hidden');
+            document.getElementById('commentForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEditComment() {
+            document.getElementById('editingCommentId').value = '';
+            document.getElementById('commentForm').reset();
+            updateCharCount(document.getElementById('commentText'));
+            setRating(5);
+            document.getElementById('commentSubmitBtn').innerText = "Yorum Yap";
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            
+            const deviceKey = `has_commented_${activePostId}`;
+            if(localStorage.getItem(deviceKey)) {
+                document.getElementById('commentFormContainer').classList.add('hidden');
             }
         }
 
@@ -495,10 +766,12 @@
             if(!post) return;
 
             post.comments = post.comments.filter(c => c.id !== commentId);
+            localStorage.removeItem(`has_commented_${activePostId}`);
 
             try {
                 const postRef = window.doc(window.db, "posts", activePostId);
                 await window.updateDoc(postRef, { comments: post.comments });
+                cancelEditComment();
                 renderComments(post);
             } catch (error) {
                 console.error("Yorum silinirken hata:", error);
@@ -508,10 +781,27 @@
 
         function renderComments(post) {
             const commentFormContainer = document.getElementById('commentFormContainer');
+            const deviceKey = `has_commented_${activePostId}`;
+            const hasCommentedFromThisDevice = localStorage.getItem(deviceKey);
+            const editingId = document.getElementById('editingCommentId').value;
+
             if(isAdmin) {
                 commentFormContainer.classList.add('hidden');
             } else {
-                commentFormContainer.classList.remove('hidden');
+                if(hasCommentedFromThisDevice && !editingId) {
+                    commentFormContainer.classList.add('hidden');
+                } else {
+                    commentFormContainer.classList.remove('hidden');
+                }
+            }
+
+            let avgRating = 0;
+            if(post.comments && post.comments.length > 0) {
+                const total = post.comments.reduce((acc, curr) => acc + (curr.rating || 5), 0);
+                avgRating = (total / post.comments.length).toFixed(1);
+                document.getElementById('postAverageRating').innerHTML = `⭐ ${avgRating} / 5 (${post.comments.length} Değerlendirme)`;
+            } else {
+                document.getElementById('postAverageRating').innerHTML = `Henüz değerlendirilmedi`;
             }
 
             const container = document.getElementById('commentsContainer');
@@ -519,21 +809,32 @@
 
             if(!post.comments || post.comments.length === 0) {
                 container.innerHTML = `<p class="text-sm text-slate-400 italic">Henüz yorum yapılmamış. İlk yorumu sen yaz!</p>`;
+                if(hasCommentedFromThisDevice) {
+                    localStorage.removeItem(deviceKey);
+                    commentFormContainer.classList.remove('hidden');
+                }
                 return;
             }
 
             post.comments.forEach(comment => {
+                const starsHtml = '★'.repeat(comment.rating || 5) + '☆'.repeat(5 - (comment.rating || 5));
+                const isMyComment = hasCommentedFromThisDevice && hasCommentedFromThisDevice == comment.id;
+
                 const commentDiv = document.createElement('div');
                 commentDiv.className = `p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-sm`;
                 commentDiv.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="font-semibold text-indigo-600 dark:text-indigo-400">${comment.author}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-indigo-600 dark:text-indigo-400">${comment.author}</span>
+                            <span class="text-amber-400 text-xs tracking-wider">${starsHtml}</span>
+                        </div>
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-slate-400">${comment.date}</span>
-                            ${isAdmin ? `<button onclick="deleteComment(${comment.id})" class="text-rose-500 hover:text-rose-700 text-xs">🗑️ Sil</button>` : ''}
+                            ${isMyComment ? `<button onclick="editCommentLocally(${comment.id})" class="text-blue-500 hover:text-blue-700 text-xs font-medium">✏️ Düzenle</button>` : ''}
+                            ${(isAdmin || isMyComment) ? `<button onclick="deleteComment(${comment.id})" class="text-rose-500 hover:text-rose-700 text-xs">🗑️ Sil</button>` : ''}
                         </div>
                     </div>
-                    <p class="text-slate-700 dark:text-slate-300 whitespace-pre-line">${comment.text}</p>
+                    <p class="text-slate-700 dark:text-slate-300 whitespace-pre-line mt-2">${comment.text}</p>
                 `;
                 container.appendChild(commentDiv);
             });
@@ -611,7 +912,7 @@
                 loadPostsFromCloud();
             } catch (error) {
                 console.error("Yazı kaydedilirken hata:", error);
-                alert("Yazı kaydedilemedi! Lütfen Firebase Firestore Kurallarınızı (Rules) kontrol edin.\n\nHata mesajı: " + error.message);
+                alert("Yazı kaydedilemedi! Lütfen Firebase kurallarınızı kontrol edin.\n\nHata: " + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Kaydet";
