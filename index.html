@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kişisel Blog & Şiir Platformu (Hamza'nın Defteri)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400;600&family=Great+Vibes&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Merriweather:ital,wght@0,300;0,700;1,300&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;600;700&family=Poiret+One&family=Poppins:wght@300;400;600;700&family=Quicksand:wght@400;600&family=Roboto:wght@300;400;700&family=Sacramento&family=Special+Elite&family=Ubuntu:wght@300;400;700&family=Yesteryear&family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Caveat:wght@400;700&family=Amatic+SC:wght@400;700&family=Indie+Flower&family=Architects+Daughter&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK Entegrasyonu (Senin Proje Bilgilerinle) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIySe3Yt7LV9bd6xOPHA5yQgC3m_Sj0pE",
+            authDomain: "hamza-s-blog.firebaseapp.com",
+            projectId: "hamza-s-blog",
+            storageBucket: "hamza-s-blog.firebasestorage.app",
+            messagingSenderId: "264508436784",
+            appId: "1:264508436784:web:3101903af80c82ce5f98f5",
+            measurementId: "G-6QTEYL1PBC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.addDoc = addDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+
+        window.loadPostsFromCloud();
+    </script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        carddark: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-darkbg text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 flex flex-col justify-between">
+
+    <!-- Üst Menü / Navbar -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-carddark/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent cursor-pointer" onclick="showPublicFeed()">
+                Hamza'nın Defteri
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Tema Değiştir">
+                    🌓
+                </button>
+                <button onclick="openAdminModal()" id="adminBtnText" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow transition">
+                    🔐 Admin Giriş
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+        
+        <!-- Filtreler ve Arama -->
+        <div id="filterSection" class="mb-8 flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-wrap gap-2" id="categoryFilters"></div>
+            <div id="adminQuickActions"></div>
+        </div>
+
+        <!-- Yazı Akışı / Grid -->
+        <div id="postsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-12 text-slate-400">Yazılar buluttan yükleniyor...</div>
+        </div>
+
+        <!-- Yazı Detay / Okuma Alanı -->
+        <div id="postDetailView" class="hidden max-w-3xl mx-auto bg-white dark:bg-carddark rounded-2xl shadow-xl p-8 transition-all">
+            <button onclick="showPublicFeed()" class="mb-6 text-sm text-indigo-500 hover:underline flex items-center gap-1">← Geri Dön</button>
+            <div id="detailContent"></div>
+
+            <!-- Yorumlar Bölümü -->
+            <div class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <h3 class="text-xl font-bold mb-4">Ziyaretçi Yorumları</h3>
+                
+                <div id="commentFormContainer">
+                    <form id="commentForm" onsubmit="addComment(event)" class="mb-8 space-y-3">
+                        <input type="text" id="commentAuthor" placeholder="Adınız / Rumuzunuz" required class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm">
+                        <textarea id="commentText" rows="3" placeholder="Yorumunuzu buraya yazın..." required class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm"></textarea>
+                        <button type="submit" id="commentSubmitBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">Yorum Yap</button>
+                    </form>
+                </div>
+
+                <div id="commentsContainer" class="space-y-4"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Admin Giriş Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-carddark rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">Admin Yetki Doğrulama</h3>
+            <input type="text" id="adminUserInput" placeholder="Kullanıcı Adı" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="password" id="adminPasswordInput" placeholder="Şifre" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            
+            <div class="flex items-center gap-2 mb-4">
+                <input type="checkbox" id="rememberMe" class="w-4 h-4 text-indigo-600 rounded">
+                <label for="rememberMe" class="text-sm font-medium cursor-pointer">Beni Anımsa</label>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closeAdminModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200 dark:bg-slate-700">İptal</button>
+                <button onclick="verifyAdmin()" class="px-4 py-2 rounded-lg text-sm bg-indigo-600 text-white font-medium">Giriş Yap</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yeni Yazı Ekleme / Düzenleme Modal -->
+    <div id="postModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-carddark rounded-2xl p-6 max-w-2xl w-full shadow-2xl my-8">
+            <h3 class="text-xl font-bold mb-4" id="modalTitle">Yeni İçerik Ekle</h3>
+            <form id="postForm" onsubmit="savePost(event)" class="space-y-4">
+                <input type="hidden" id="postId">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Başlık</label>
+                    <input type="text" id="postTitle" required class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Tür</label>
+                        <select id="postType" onchange="checkCustomType(this)" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700">
+                            <option value="Şiir">Şiir</option>
+                            <option value="Makale">Makale</option>
+                            <option value="Gezi">Gezi</option>
+                            <option value="Araştırma">Araştırma</option>
+                            <option value="Günlük">Günlük</option>
+                            <option value="Deneme">Deneme</option>
+                            <option value="custom">➕ Özel Tür Ekle...</option>
+                        </select>
+                        <input type="text" id="customTypeInput" placeholder="Yeni tür adını yazın..." class="w-full mt-2 px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 hidden">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Konu / Tema</label>
+                        <input type="text" id="postTopic" placeholder="Örn: Özlem, Doğa, Melankoli..." class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Yazı Fontu</label>
+                        <select id="postFont" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm">
+                            <optgroup label="Klasik & Roman">
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="'Merriweather', serif">Merriweather</option>
+                                <option value="'Playfair Display', serif">Playfair Display</option>
+                                <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+                            </optgroup>
+                            <optgroup label="Modern & Sans-Serif">
+                                <option value="'Inter', sans-serif">Inter</option>
+                                <option value="'Roboto', sans-serif">Roboto</option>
+                                <option value="'Poppins', sans-serif">Poppins</option>
+                                <option value="'Montserrat', sans-serif">Montserrat</option>
+                            </optgroup>
+                            <optgroup label="Şiir & El Yazısı">
+                                <option value="'Great Vibes', cursive">Great Vibes</option>
+                                <option value="'Dancing Script', cursive">Dancing Script</option>
+                                <option value="'Caveat', cursive">Caveat</option>
+                                <option value="'Sacramento', cursive">Sacramento</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Font Boyutu</label>
+                        <select id="postFontSize" class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 text-sm">
+                            <option value="text-sm">Küçük (14px)</option>
+                            <option value="text-base" selected>Normal (16px)</option>
+                            <option value="text-lg">Büyük (18px)</option>
+                            <option value="text-xl">Çok Büyük (20px)</option>
+                            <option value="text-2xl">Dev (24px)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">İçerik / Metin</label>
+                    <textarea id="postContent" rows="8" required placeholder="İstediğiniz uzunlukta yazabilirsiniz..." class="w-full px-4 py-2 border rounded-lg dark:bg-slate-900 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="postIsPrivate" class="w-4 h-4 text-indigo-600 rounded">
+                    <label for="postIsPrivate" class="text-sm font-medium">Bu içeriği Gizli / Taslak olarak sakla (Sadece admin görür)</label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closePostModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200 dark:bg-slate-700">İptal</button>
+                    <button type="submit" id="saveSubmitBtn" class="px-4 py-2 rounded-lg text-sm bg-indigo-600 text-white font-medium">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-500">
+        <p>© 2026 - Muhammed Hamza Tepealtı | Kişisel Blog & Şiir Platformu (Cloud)</p>
+    </footer>
+
+    <script>
+        let posts = [];
+        let isAdmin = false;
+        let currentFilter = 'all';
+        let activePostId = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const rememberedSession = localStorage.getItem('hamza_admin_logged');
+            const rememberedUser = localStorage.getItem('hamza_admin_user');
+            
+            if(rememberedSession === 'true') {
+                isAdmin = true;
+                document.getElementById('adminBtnText').innerText = '🔓 Admin (Çıkış)';
+                document.getElementById('adminQuickActions').innerHTML = `<button onclick="openPostModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition">➕ Yeni İçerik Ekle</button>`;
+            }
+
+            if(rememberedUser) {
+                document.getElementById('adminUserInput').value = rememberedUser;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+
+        async function loadPostsFromCloud() {
+            try {
+                if(!window.db) return;
+                const querySnapshot = await window.getDocs(window.collection(window.db, "posts"));
+                posts = [];
+                querySnapshot.forEach((docSnap) => {
+                    posts.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                
+                posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+                renderFilters();
+                renderPosts();
+            } catch (error) {
+                console.error("Yazılar yüklenirken hata oluştu: ", error);
+                document.getElementById('postsContainer').innerHTML = `<div class="col-span-full text-center py-12 text-rose-500 font-semibold">Firebase Firestore iznini açmanız gerekiyor!<br><span class="text-xs font-normal text-slate-400">Firebase Console > Firestore Database > Rules sekmesinden "allow read, write: if true;" yapın.</span></div>`;
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function checkCustomType(select) {
+            const customInput = document.getElementById('customTypeInput');
+            if(select.value === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function openAdminModal() {
+            if(isAdmin) {
+                isAdmin = false;
+                localStorage.removeItem('hamza_admin_logged');
+                document.getElementById('adminBtnText').innerText = '🔐 Admin Giriş';
+                document.getElementById('adminQuickActions').innerHTML = '';
+                
+                if(activePostId) {
+                    const post = posts.find(p => p.id === activePostId);
+                    if(post) renderComments(post);
+                }
+
+                renderFilters();
+                renderPosts();
+            } else {
+                document.getElementById('adminModal').classList.remove('hidden');
+            }
+        }
+        function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
+        
+        function verifyAdmin() {
+            const user = document.getElementById('adminUserInput').value.trim();
+            const pass = document.getElementById('adminPasswordInput').value.trim();
+            const remember = document.getElementById('rememberMe').checked;
+
+            if(user === 'yarimakillisair' && pass === 'hamza@.com') {
+                isAdmin = true;
+                document.getElementById('adminBtnText').innerText = '🔓 Admin (Çıkış)';
+                document.getElementById('adminQuickActions').innerHTML = `<button onclick="openPostModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow transition">➕ Yeni İçerik Ekle</button>`;
+                
+                localStorage.setItem('hamza_admin_logged', 'true');
+                if(remember) {
+                    localStorage.setItem('hamza_admin_user', user);
+                } else {
+                    localStorage.removeItem('hamza_admin_user');
+                }
+
+                closeAdminModal();
+                document.getElementById('adminPasswordInput').value = '';
+
+                if(activePostId) {
+                    const post = posts.find(p => p.id === activePostId);
+                    if(post) renderComments(post);
+                }
+
+                renderFilters();
+                renderPosts();
+            } else {
+                alert('Hatalı kullanıcı adı veya şifre!');
+            }
+        }
+
+        document.getElementById('adminUserInput').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') { e.preventDefault(); verifyAdmin(); }
+        });
+        document.getElementById('adminPasswordInput').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') { e.preventDefault(); verifyAdmin(); }
+        });
+
+        document.getElementById('postTitle').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') { e.preventDefault(); this.blur(); }
+        });
+        document.getElementById('postTopic').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') { e.preventDefault(); this.blur(); }
+        });
+        document.getElementById('customTypeInput').addEventListener('keydown', function(e) {
+            if(e.key === 'Enter') { e.preventDefault(); this.blur(); }
+        });
+
+        function filterPosts(type) {
+            currentFilter = type;
+            renderFilters();
+            renderPosts();
+        }
+
+        function renderFilters() {
+            const filterContainer = document.getElementById('categoryFilters');
+            const defaultTypes = ['Şiir', 'Makale', 'Gezi', 'Araştırma', 'Günlük', 'Deneme'];
+            
+            const customTypesFromPosts = posts.map(p => p.type).filter(t => !defaultTypes.includes(t));
+            const allTypes = ['all', ...defaultTypes, ...new Set(customTypesFromPosts)];
+
+            filterContainer.innerHTML = '';
+            allTypes.forEach(type => {
+                const btn = document.createElement('button');
+                const label = type === 'all' ? 'Tümü' : type;
+                const isActive = currentFilter === type;
+                btn.className = `px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                    isActive ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 hover:bg-indigo-500 hover:text-white'
+                }`;
+                btn.innerText = label;
+                btn.onclick = () => filterPosts(type);
+                filterContainer.appendChild(btn);
+            });
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            container.innerHTML = '';
+
+            let filtered = posts;
+            if(!isAdmin) {
+                filtered = filtered.filter(p => !p.isPrivate);
+            }
+            if(currentFilter !== 'all') {
+                filtered = filtered.filter(p => p.type === currentFilter);
+            }
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">Henüz bu kategoride içerik bulunmuyor.</div>`;
+                return;
+            }
+
+            filtered.forEach(post => {
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-carddark border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between transition hover:shadow-md`;
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-semibold uppercase tracking-wider">${post.type}</span>
+                            <div class="flex items-center gap-2">
+                                ${post.isPrivate ? '<span class="px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded text-xs">🔒 Özel</span>' : ''}
+                                <span class="text-xs text-slate-400">${post.date}</span>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">${post.title}</h3>
+                        <p class="${post.fontSize || 'text-sm'} text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 whitespace-pre-line" style="font-family: ${post.font || 'inherit'}">${post.content}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-xs italic text-indigo-500 font-medium">#${post.topic || 'Genel'}</span>
+                        <div class="flex gap-2">
+                            <button onclick="viewPost('${post.id}')" class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 rounded-lg text-xs font-medium transition">Oku →</button>
+                            ${isAdmin ? `<button onclick="editPost('${post.id}')" class="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 rounded-lg text-xs">✏️</button><button onclick="deletePost('${post.id}')" class="px-2 py-1 bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 rounded-lg text-xs">🗑️</button>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function viewPost(id) {
+            const post = posts.find(p => p.id === id);
+            if(!post) return;
+
+            activePostId = id;
+            document.getElementById('filterSection').classList.add('hidden');
+            document.getElementById('postsContainer').classList.add('hidden');
+            const detailView = document.getElementById('postDetailView');
+            detailView.classList.remove('hidden');
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-semibold">${post.type}</span>
+                    <span class="text-sm text-slate-400">${post.date}</span>
+                </div>
+                <h2 class="text-3xl font-bold mb-4">${post.title}</h2>
+                <p class="text-sm text-indigo-500 mb-6 font-medium">Tema: #${post.topic || 'Genel'}</p>
+                <div class="prose dark:prose-invert max-w-none whitespace-pre-line leading-relaxed ${post.fontSize || 'text-lg'}" style="font-family: ${post.font || 'inherit'}">${post.content}</div>
+            `;
+
+            renderComments(post);
+        }
+
+        function showPublicFeed() {
+            document.getElementById('postDetailView').classList.add('hidden');
+            document.getElementById('filterSection').classList.remove('hidden');
+            document.getElementById('postsContainer').classList.remove('hidden');
+            activePostId = null;
+            loadPostsFromCloud();
+        }
+
+        async function addComment(e) {
+            e.preventDefault();
+            if(isAdmin) {
+                alert('Admin olarak yorum yapamazsınız!');
+                return;
+            }
+
+            const author = document.getElementById('commentAuthor').value.trim();
+            const text = document.getElementById('commentText').value.trim();
+            if(!author || !text || !activePostId) return;
+
+            const post = posts.find(p => p.id === activePostId);
+            if(!post) return;
+
+            if(!post.comments) post.comments = [];
+
+            post.comments.push({
+                id: Date.now(),
+                author: author,
+                text: text,
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            const btn = document.getElementById('commentSubmitBtn');
+            btn.disabled = true;
+            btn.innerText = "Gönderiliyor...";
+
+            try {
+                const postRef = window.doc(window.db, "posts", activePostId);
+                await window.updateDoc(postRef, { comments: post.comments });
+                document.getElementById('commentForm').reset();
+                renderComments(post);
+            } catch (error) {
+                console.error("Yorum eklenirken hata:", error);
+                alert("Yorum gönderilemedi! Firebase Firestore Kurallarınızı (Rules) kontrol edin.\n\nHata: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Yorum Yap";
+            }
+        }
+
+        async function deleteComment(commentId) {
+            const post = posts.find(p => p.id === activePostId);
+            if(!post) return;
+
+            post.comments = post.comments.filter(c => c.id !== commentId);
+
+            try {
+                const postRef = window.doc(window.db, "posts", activePostId);
+                await window.updateDoc(postRef, { comments: post.comments });
+                renderComments(post);
+            } catch (error) {
+                console.error("Yorum silinirken hata:", error);
+                alert("Yorum silinemedi: " + error.message);
+            }
+        }
+
+        function renderComments(post) {
+            const commentFormContainer = document.getElementById('commentFormContainer');
+            if(isAdmin) {
+                commentFormContainer.classList.add('hidden');
+            } else {
+                commentFormContainer.classList.remove('hidden');
+            }
+
+            const container = document.getElementById('commentsContainer');
+            container.innerHTML = '';
+
+            if(!post.comments || post.comments.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-400 italic">Henüz yorum yapılmamış. İlk yorumu sen yaz!</p>`;
+                return;
+            }
+
+            post.comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = `p-4 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-sm`;
+                commentDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-semibold text-indigo-600 dark:text-indigo-400">${comment.author}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-400">${comment.date}</span>
+                            ${isAdmin ? `<button onclick="deleteComment(${comment.id})" class="text-rose-500 hover:text-rose-700 text-xs">🗑️ Sil</button>` : ''}
+                        </div>
+                    </div>
+                    <p class="text-slate-700 dark:text-slate-300 whitespace-pre-line">${comment.text}</p>
+                `;
+                container.appendChild(commentDiv);
+            });
+        }
+
+        function openPostModal(id = null) {
+            document.getElementById('postModal').classList.remove('hidden');
+            if(id) {
+                const post = posts.find(p => p.id === id);
+                document.getElementById('modalTitle').innerText = 'İçeriği Düzenle';
+                document.getElementById('postId').value = post.id;
+                document.getElementById('postTitle').value = post.title;
+                
+                const typeSelect = document.getElementById('postType');
+                if(Array.from(typeSelect.options).some(o => o.value === post.type)) {
+                    typeSelect.value = post.type;
+                    document.getElementById('customTypeInput').classList.add('hidden');
+                } else {
+                    typeSelect.value = 'custom';
+                    document.getElementById('customTypeInput').classList.remove('hidden');
+                    document.getElementById('customTypeInput').value = post.type;
+                }
+
+                document.getElementById('postTopic').value = post.topic;
+                document.getElementById('postFont').value = post.font || "'Times New Roman', serif";
+                document.getElementById('postFontSize').value = post.fontSize || 'text-base';
+                document.getElementById('postContent').value = post.content;
+                document.getElementById('postIsPrivate').checked = post.isPrivate || false;
+            } else {
+                document.getElementById('modalTitle').innerText = 'Yeni İçerik Ekle';
+                document.getElementById('postForm').reset();
+                document.getElementById('postId').value = '';
+                document.getElementById('customTypeInput').classList.add('hidden');
+            }
+        }
+        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
+
+        async function savePost(e) {
+            e.preventDefault();
+            const id = document.getElementById('postId').value;
+            let type = document.getElementById('postType').value;
+            if(type === 'custom') {
+                type = document.getElementById('customTypeInput').value.trim();
+            }
+            if(!type) return;
+
+            const existingPost = id ? posts.find(p => p.id === id) : null;
+
+            const postData = {
+                title: document.getElementById('postTitle').value,
+                type: type,
+                topic: document.getElementById('postTopic').value,
+                font: document.getElementById('postFont').value,
+                fontSize: document.getElementById('postFontSize').value,
+                content: document.getElementById('postContent').value,
+                isPrivate: document.getElementById('postIsPrivate').checked,
+                date: existingPost ? existingPost.date : new Date().toISOString().split('T')[0],
+                createdAt: existingPost ? existingPost.createdAt : Date.now(),
+                comments: existingPost ? existingPost.comments : []
+            };
+
+            const btn = document.getElementById('saveSubmitBtn');
+            btn.disabled = true;
+            btn.innerText = "Kaydediliyor...";
+
+            try {
+                if(id) {
+                    const postRef = window.doc(window.db, "posts", id);
+                    await window.updateDoc(postRef, postData);
+                } else {
+                    await window.addDoc(window.collection(window.db, "posts"), postData);
+                }
+
+                closePostModal();
+                loadPostsFromCloud();
+            } catch (error) {
+                console.error("Yazı kaydedilirken hata:", error);
+                alert("Yazı kaydedilemedi! Lütfen Firebase Firestore Kurallarınızı (Rules) kontrol edin.\n\nHata mesajı: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Kaydet";
+            }
+        }
+
+        function editPost(id) { openPostModal(id); }
+
+        async function deletePost(id) {
+            if(confirm('Bu içeriği buluttan tamamen silmek istediğinize emin misiniz?')) {
+                try {
+                    await window.deleteDoc(window.doc(window.db, "posts", id));
+                    loadPostsFromCloud();
+                } catch (error) {
+                    console.error("Yazı silinirken hata:", error);
+                    alert("Silme işlemi başarısız: " + error.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
